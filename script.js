@@ -83,6 +83,31 @@ function createEquations() {
 //   itemContainer.appendChild(bottomSpacer);
 // }
 
+//show the countdown 3, 2, 1 Go
+function startCountdown(){
+  countdown.innerText="3";
+  setTimeout(()=>{
+    countdown.innerText="2";
+    setTimeout(()=>{
+      countdown.innerText="1";
+      setTimeout(()=>{
+        countdown.innerText="GO!";
+        setTimeout(()=>{
+          countdownPage.hidden=true;
+          gamePage.hidden=false;
+        },1000);
+      },1000);
+    },1000);
+  },1000);
+}
+
+//Function to show countdown page
+function showCountdown(){
+  splashPage.hidden=true;
+  countdownPage.hidden=false;
+  startCountdown();
+}
+
 //function to get Radio Value
 function getRadioValue(){
   let radioValue;
@@ -99,6 +124,9 @@ function selectQuestionAmount(e){
   e.preventDefault();
   questionAmount=getRadioValue();
   console.log(questionAmount);
+  if(questionAmount){
+    showCountdown();
+  }
 }
 
 //Event listeners
