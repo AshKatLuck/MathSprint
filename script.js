@@ -19,8 +19,9 @@ const penaltyTimeEl = document.querySelector('.penalty-time');
 const playAgainBtn = document.querySelector('.play-again');
 
 // Equations
-let questionAmount='0';
+let questionAmount=0;
 let equationsArray = [];
+let playerGuessArray=[];
 
 // Game Page
 let firstNumber = 0;
@@ -30,58 +31,185 @@ const wrongFormat = [];
 
 // Time
 
+let timer;
+let timePlayed=0;
+let baseTime=0;
+let penaltyTime=0;
+let finalTime=0;
+let finalTimeDisplay='0.0s';
+let correctAnswers=0;
+
 // Scroll
+let valueY=0;
+
+function clearAll(){
+  gamePage.addEventListener('click',startTimer);
+  correctAnswers=0;
+  timePlayed=0;
+  penaltyTime=0;
+  finalTime=0;
+  finalTimeDisplay='0.0s';
+  valueY=0;
+  questionAmount=0;
+  equationsArray=[];
+  equationObject={};
+  playerGuessArray=[];
+}
+
+function showSplashPage(){
+  clearAll();    
+  scorePage.hidden=true;
+  splashPage.hidden=false;
+  playAgainBtn.hidden=true;
+}
+
+function showScorePage(){
+  setTimeout(()=>{
+    playAgainBtn.hidden=false;
+  },1000);
+  gamePage.hidden=true;
+  scorePage.hidden=false;
+}
+
+function scoresToDOM(){
+  finalTimeDisplay=finalTime.toFixed(1);
+  baseTime=timePlayed.toFixed(1);
+  penaltyTime=penaltyTime.toFixed(1);
+  baseTimeEl.textContent=`Base Time:${baseTime}s`;
+  penaltyTimeEl.textContent=`Penalty: +${penaltyTime}s`;
+  finalTimeEl.textContent=`${finalTimeDisplay}s`;
+  //Scroll to top, go to score page
+  itemContainer.scrollTo({top:0, behavior:'instant'});
+  showScorePage();
+}
+
+//function to checkTime if number of quetions=no of items in playerguess array
+function checkTime(){
+  // console.log(questionAmount, playerGuessArray.length)
+  if(questionAmount==playerGuessArray.length){
+    clearInterval(timer);
+    for(let i=0;i<questionAmount;i++){
+      if(equationsArray[i].evaluated==playerGuessArray[i]){
+        correctAnswers++;
+      }
+    }
+    penaltyTime=(questionAmount-correctAnswers)*0.5;
+    finalTime=timePlayed+penaltyTime;
+    // console.log("played Time", timePlayed);
+    // console.log('pentalty time', penaltyTime);
+    // console.log("finalTimeDisplay", finalTimeDisplay);
+    scoresToDOM();
+  }
+  
+}
+
+
+//function to call for running evenry .1s
+function addTime(){
+  timePlayed+=0.1;
+  checkTime();
+}
+
+//Start timer when game page is clicked
+function startTimer(){
+  //Reset Times
+  timePlayed=0;
+  penaltyTime=0;
+  finalTime=0;
+  timer=setInterval(addTime,100);
+  gamePage.removeEventListener('click', startTimer);
+
+}
+
+//Scroll, store user selection
+function select(guessedTrue){
+  // console.log(playerGuessArray);
+  valueY+=80;
+  itemContainer.scroll(0, valueY);
+  playerGuessArray.push(guessedTrue);
+  // return guessedTrue ? playerGuessArray.push('true') : playerGuessArray.push('false');
+  return;
+}
+
+//Function to get randomInteger
+function getRndInteger(max) {
+  const random=Math.floor(Math.random() * (max + 1));
+  // console.log('Random', random);
+  return random;
+}
+
+
+
 
 // Create Correct/Incorrect Random Equations
 function createEquations() {
   // Randomly choose how many correct equations there should be
-  // const correctEquations = 
+  const correctEquations = getRndInteger(questionAmount);
   // Set amount of wrong equations
-  // const wrongEquations = 
+  const wrongEquations = questionAmount-correctEquations;
+  // console.log(questionAmount, correctEquations, wrongEquations);
   // Loop through, multiply random numbers up to 9, push to array
-  // for (let i = 0; i < correctEquations; i++) {
-  //   firstNumber = 
-  //   secondNumber = 
-  //   const equationValue = firstNumber * secondNumber;
-  //   const equation = `${firstNumber} x ${secondNumber} = ${equationValue}`;
-  //   equationObject = { value: equation, evaluated: 'true' };
-  //   equationsArray.push(equationObject);
-  // }
+  for (let i = 0; i < correctEquations; i++) {
+    firstNumber = getRndInteger(9);
+    secondNumber = getRndInteger(9);
+    const equationValue = firstNumber * secondNumber;
+    const equation = `${firstNumber} x ${secondNumber} = ${equationValue}`;
+    // console.log(equation);
+    equationObject = { value: equation, evaluated: 'true' };
+    equationsArray.push(equationObject);
+  }
   // Loop through, mess with the equation results, push to array
-  // for (let i = 0; i < wrongEquations; i++) {
-  //   firstNumber = 
-  //   secondNumber = 
-  //   const equationValue = firstNumber * secondNumber;
-  //   wrongFormat[0] = `${firstNumber} x ${secondNumber + 1} = ${equationValue}`;
-  //   wrongFormat[1] = `${firstNumber} x ${secondNumber} = ${equationValue - 1}`;
-  //   wrongFormat[2] = `${firstNumber + 1} x ${secondNumber} = ${equationValue}`;
-  //   const formatChoice = 
-  //   const equation = wrongFormat[formatChoice];
-  //   equationObject = { value: equation, evaluated: 'false' };
-  //   equationsArray.push(equationObject);
-  // }
+  for (let i = 0; i < wrongEquations; i++) {
+    firstNumber = getRndInteger(9);
+    secondNumber = getRndInteger(9);
+    const equationValue = firstNumber * secondNumber;
+    wrongFormat[0] = `${firstNumber} x ${secondNumber + 1} = ${equationValue}`;
+    wrongFormat[1] = `${firstNumber} x ${secondNumber} = ${equationValue - 1}`;
+    wrongFormat[2] = `${firstNumber + 1} x ${secondNumber} = ${equationValue}`;
+    const formatChoice = getRndInteger(2);
+    const equation = wrongFormat[formatChoice];
+    equationObject = { value: equation, evaluated: 'false' };
+    equationsArray.push(equationObject);
+  }
+ 
+  shuffle(equationsArray);
+  
+}
+
+//Function add equationstoDOM
+function addEquationsToDOM(){
+  equationsArray.forEach((equation)=>{
+    const item=document.createElement("div");
+    item.classList.add("item");
+    const h1=document.createElement("h1");
+    h1.textContent=equation.value;
+    item.appendChild(h1);
+    itemContainer.appendChild(item);
+  })
 }
 
 // Dynamically adding correct/incorrect equations
-// function populateGamePage() {
-//   // Reset DOM, Set Blank Space Above
-//   itemContainer.textContent = '';
-//   // Spacer
-//   const topSpacer = document.createElement('div');
-//   topSpacer.classList.add('height-240');
-//   // Selected Item
-//   const selectedItem = document.createElement('div');
-//   selectedItem.classList.add('selected-item');
-//   // Append
-//   itemContainer.append(topSpacer, selectedItem);
+function populateGamePage() {
+  // Reset DOM, Set Blank Space Above
+  itemContainer.textContent = '';
+  // Spacer
+  const topSpacer = document.createElement('div');
+  topSpacer.classList.add('height-240');
+  // Selected Item
+  const selectedItem = document.createElement('div');
+  selectedItem.classList.add('selected-item');
+  // Append
+  itemContainer.append(topSpacer, selectedItem);
 
-//   // Create Equations, Build Elements in DOM
+  // Create Equations, Build Elements in DOM
+  createEquations();
+  addEquationsToDOM();
 
-//   // Set Blank Space Below
-//   const bottomSpacer = document.createElement('div');
-//   bottomSpacer.classList.add('height-500');
-//   itemContainer.appendChild(bottomSpacer);
-// }
+  // Set Blank Space Below
+  const bottomSpacer = document.createElement('div');
+  bottomSpacer.classList.add('height-500');
+  itemContainer.appendChild(bottomSpacer);
+}
 
 //show the countdown 3, 2, 1 Go
 function startCountdown(){
@@ -105,7 +233,15 @@ function startCountdown(){
 function showCountdown(){
   splashPage.hidden=true;
   countdownPage.hidden=false;
-  startCountdown();
+  startCountdown();  
+  setTimeout(showGamePage,4000);
+  populateGamePage();  
+}
+
+//Function to show game page
+function showGamePage(){
+  countdownPage.hidden=true;
+  gamePage.hidden=false;
 }
 
 //function to get Radio Value
@@ -116,18 +252,20 @@ function getRadioValue(){
       radioValue=radioInput.value;
     }
   })
-  return radioValue;
+  return Number(radioValue);
 }
 
 //function to select question amount
 function selectQuestionAmount(e){
   e.preventDefault();
   questionAmount=getRadioValue();
-  console.log(questionAmount);
+  // console.log(typeof questionAmount);
   if(questionAmount){
     showCountdown();
   }
 }
+
+
 
 //Event listeners
 
@@ -143,3 +281,5 @@ startForm.addEventListener('click',()=>{
 })
 
 startForm.addEventListener("submit",selectQuestionAmount);
+gamePage.addEventListener('click', startTimer);
+playAgainBtn.addEventListener('click',showSplashPage);
